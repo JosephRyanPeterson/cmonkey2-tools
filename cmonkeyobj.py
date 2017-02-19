@@ -47,18 +47,21 @@ pd.DataFrame([b.get_cluster_info(k)['pclusts'] for k in range(1,b.k_clust)]).plo
 ##  https://www.biostars.org/p/96470/#97713
 
 class cMonkey2:
-    dbfile = '' #None
-    tables = {} #None
-    iteration = 2001
-    k_clust = 999 #None
-    organism = '' #'eco'
-    species = '' #'Escherichia_coli_K12' #None
-    taxon_id = None
-    ratios = pd.DataFrame()
-    config = ConfigParser.ConfigParser() #None
-    stats = None
 
     def __init__( self, dbfile ):
+        # Intiailze all object attributes to default parameters
+        self.dbfile = '' #None
+        self.tables = {} #None
+        self.iteration = 2001
+        self.k_clust = 999 #None
+        self.organism = '' #'eco'
+        self.species = '' #'Escherichia_coli_K12' #None
+        self.taxon_id = None
+        self.config = ConfigParser.ConfigParser() #None
+        self.ratios = None
+        self.stats = None
+
+        # Initialize attributes
         self.dbfile = dbfile
         conn = sql3.connect( dbfile )
         tmp = pd.read_sql('select max(iteration) from iteration_stats', conn) ##last_iteration from run_infos', conn)
