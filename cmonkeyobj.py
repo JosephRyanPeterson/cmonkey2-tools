@@ -1,9 +1,24 @@
+from __future__ import print_function
 import os
-import cStringIO
+try:
+    # Python 2
+    from cStringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
 import sqlite3 as sql3
 import gzip,bz2
-import cPickle as pickle
-import ConfigParser
+try:
+    # Python 2
+    import cPickle as pickle
+except:
+    # Python 3
+    import _pickle as pickle
+try:
+    import ConfigParser
+except:
+    # Python 3
+    import configparser as ConfigParser
 import pandas as pd
 import numpy as np
 from numpy import nan as NA
@@ -48,7 +63,7 @@ class cMonkey2:
         tmp = pd.read_sql('select max(iteration) from iteration_stats', conn) ##last_iteration from run_infos', conn)
         conn.close()
         self.iteration = tmp.max()[0] ## get iteration
-        print 'iteration =', self.iteration
+        print('iteration =', self.iteration)
         self.tables = self.__read_all_tables( dbfile, iteration=self.iteration )
         #self.iteration = max(self.tables['motif_infos'].iteration)
         self.k_clust = self.tables['run_infos'].num_clusters[0] ##max(self.tables['row_members'].cluster)
@@ -84,7 +99,7 @@ class cMonkey2:
         tmp = pd.read_sql('select max(iteration) from iteration_stats',conn)
         conn.close()
         self.iteration = tmp.max()[0] ## get iteration
-        print 'iteration =', self.iteration
+        print('iteration =', self.iteration)
         self.tables = self.__read_all_tables( self.dbfile, iteration=self.iteration )        
         self.stats = None
 
@@ -139,7 +154,7 @@ class cMonkey2:
 
         org_table = kegg.kegg_list('organism').readlines()
         org_table = ''.join( org_table )
-        buf = cStringIO.StringIO( org_table )
+        buf = StringIO( org_table )
         org_table = pd.read_table( buf, sep='\t', header=None )
         #full_org_name = org_table.ix[org_table[1]==in_code][2].values[0]
         buf.close()
@@ -147,7 +162,7 @@ class cMonkey2:
 
         gen_table = kegg.kegg_list('genome').readlines()
         gen_table = ''.join( gen_table )
-        buf = cStringIO.StringIO( gen_table )
+        buf = StringIO( gen_table )
         gen_table = pd.read_table( buf, sep='\t', header=None )
         buf.close()
         taxon_id = int(gen_table.ix[ gen_table[0] == 'genome:'+kegg_code ][1].values[0].split(', ')[2].split('; ')[0])
@@ -194,7 +209,7 @@ class cMonkey2:
                 'features': features,
                 'genome': genome,
                 'networks': networks }
-        print outfile
+        print(outfile)
         pickle.dump( obj, outfile )
         outfile.close()
 
@@ -291,7 +306,7 @@ class cMonkey2:
         gr = nx.Graph()
         if 'string' in out_nets.keys():
             strng = out_nets[ 'string' ]
-            buf = cStringIO.StringIO()  ## round-about way to do it but wtf?
+            buf = StringIO()  ## round-about way to do it but wtf?
             strng.to_csv( buf, sep='\t', header=False, index=False )
             buf.flush(); buf.seek(0)
             gr = nx.read_weighted_edgelist( buf )
@@ -301,7 +316,7 @@ class cMonkey2:
             ops = ops.ix[ ops.bOp == True ]
             ops = ops[ ['SysName1','SysName2','pOp'] ]
             ops.pOp = ops.pOp * 1000.
-            buf = cStringIO.StringIO()  ## round-about way to do it but wtf?
+            buf = StringIO()  ## round-about way to do it but wtf?
             ops.to_csv( buf, sep='\t', header=False, index=False )
             buf.flush(); buf.seek(0)
             gr2 = nx.read_weighted_edgelist( buf )
@@ -431,7 +446,7 @@ class cMonkey2:
         #rowid = motif_infos[(motif_infos.iteration==self.iteration) & 
         #                    (motif_infos.cluster==cluster_num) & (motif_infos.motif_num==motif_num)].index.values[0]+1
         rowid = self.__get_motif_id(cluster_num, motif_num)
-        print rowid
+        print(rowid)
 
         sites = self.tables['meme_motif_sites']
         sites = sites[ sites.motif_info_id == rowid ]
@@ -486,7 +501,7 @@ class cMonkey2:
         #gdd.write(output, 'png', dpi=300)
         #output.seek(0)
         output = gdd.write_to_string(output='png', dpi=300)
-        output = cStringIO.StringIO(output)
+        output = StringIO(output)
         img = mpimg.imread(output)
         plt.axis('off')
         imgplot = plt.imshow( img, interpolation='bicubic' )
@@ -525,7 +540,7 @@ class cMonkey2:
         #mot_sites = pd.read_sql('select * from meme_motif_sites where motif_info_id=?', conn, params=[rowid])
         mot_sites = self.tables['meme_motif_sites'][self.tables['meme_motif_sites'].motif_info_id == rowid]
             
-        output = cStringIO.StringIO()
+        output = StringIO()
         ## ONE WAY TO TRY -- but Bio.motifs cant parse the incomplete MEME file
         ##output.write(em.MEME_FILE_HEADER % (0.25, 0.25, 0.25, 0.25))
         ##em.write_pssm(output, cursor, os.path.dirname(self.dbfile), cluster_num, rowid,
@@ -604,7 +619,7 @@ class cMonkey2:
         format.resolution = 150
         if img_format == 'png':
             tmp = wl.png_formatter( ldata, format )
-            output = cStringIO.StringIO(tmp)
+            output = StringIO(tmp)
             img = mpimg.imread(output)
             plt.axis('off')
             imgplot = plt.imshow( img )

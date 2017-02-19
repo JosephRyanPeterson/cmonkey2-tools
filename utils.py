@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import multiprocessing as mp
 
@@ -10,13 +11,13 @@ import numpy as np
 import pandas as pd
 import sqlite3
 
-print 'importing utils'
+print('importing utils')
 
 def stop():
     raise 'STOPPING ON PURPOSE!'
 
 def system( cmd ):
-    print cmd
+    print(cmd)
     tmp = os.popen( cmd ).read()
     return tmp
 
@@ -79,7 +80,7 @@ def slice_sampler(px, N = 1, x = None):
     samples = np.arange(len(px))
     px = np.array(px) / (1.*sum(px))
     u = uniform(0, max(px))
-    for n in xrange(N):
+    for n in range(N):
         included = px>=u
         choice = random.sample(range(np.sum(included)), 1)[0]
         values[n] = samples[included][choice]
@@ -89,7 +90,7 @@ def slice_sampler(px, N = 1, x = None):
             x=np.array(x)
             values = x[values]
         else:
-            print "px and x are different lengths. Returning index locations for px."
+            print("px and x are different lengths. Returning index locations for px.")
     if N == 1:
         return values[0]
     return values
