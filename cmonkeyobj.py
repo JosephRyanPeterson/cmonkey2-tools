@@ -5,7 +5,8 @@ try:
     from cStringIO import StringIO
 except ImportError:
     # Python 3
-    from io import StringIO
+    import io
+    from io import BytesIO as StringIO
 import sqlite3 as sql3
 import gzip,bz2
 try:
@@ -152,19 +153,32 @@ class cMonkey2:
         if in_code is None:
             in_code = self.tables['run_infos'].organism[0]
 
-        org_table = kegg.kegg_list('organism').readlines()
-        org_table = ''.join( org_table )
-        buf = StringIO( org_table )
-        org_table = pd.read_table( buf, sep='\t', header=None )
+        # Get KEGG code for the organism
+        try:
+            # Python 2
+            org_table = kegg.kegg_list('organism').readlines()
+            org_table = ''.join( org_table )
+            buf = StringIO( org_table )
+            org_table = pd.read_table( buf, sep='\t', header=None )
+            buf.close()
+        except:
+            # Python 3
+            org_table = pd.read_table(kegg.kegg_list('organism'), sep="\t", header=None)
         #full_org_name = org_table.ix[org_table[1]==in_code][2].values[0]
-        buf.close()
         kegg_code = org_table.ix[org_table[1]==in_code][0].values[0]
 
-        gen_table = kegg.kegg_list('genome').readlines()
-        gen_table = ''.join( gen_table )
-        buf = StringIO( gen_table )
-        gen_table = pd.read_table( buf, sep='\t', header=None )
-        buf.close()
+        # Get the genome file
+        try:
+            # Python 2
+            gen_table = kegg.kegg_list('genome').readlines()
+            gen_table = ''.join( gen_table )
+            buf = StringIO( gen_table )
+            gen_table = pd.read_table( buf, sep='\t', header=None )
+            buf.close()
+        except:
+            # Python 3
+            gen_table = pd.read_table(kegg.kegg_list('genome'), sep='\t', header=None)
+
         taxon_id = int(gen_table.ix[ gen_table[0] == 'genome:'+kegg_code ][1].values[0].split(', ')[2].split('; ')[0])
         self.taxon_id = taxon_id
         return taxon_id
@@ -306,9 +320,22 @@ class cMonkey2:
         gr = nx.Graph()
         if 'string' in out_nets.keys():
             strng = out_nets[ 'string' ]
-            buf = StringIO()  ## round-about way to do it but wtf?
-            strng.to_csv( buf, sep='\t', header=False, index=False )
-            buf.flush(); buf.seek(0)
+            try:
+                # Python 2
+                buf = StringIO()  ## round-about way to do it but wtf?
+                strng.to_csv( buf, sep='\t', header=False, index=False )
+                buf.flush(); buf.seek(0)
+            except:
+                # Python 3
+                buf = io.StringIO()
+                strng.to_csv(buf, sep='\t', header=False, index=False )
+                buf.flush(); buf.seek(0)
+                buf2 = io.BytesIO()
+                for l in buf:
+                    buf2.write(l.encode("UTF-8"))
+                buf2.flush()
+                buf2.seek(0)
+                buf = buf2
             gr = nx.read_weighted_edgelist( buf )
             buf.close()
         if 'operons' in out_nets.keys():
@@ -316,9 +343,22 @@ class cMonkey2:
             ops = ops.ix[ ops.bOp == True ]
             ops = ops[ ['SysName1','SysName2','pOp'] ]
             ops.pOp = ops.pOp * 1000.
-            buf = StringIO()  ## round-about way to do it but wtf?
-            ops.to_csv( buf, sep='\t', header=False, index=False )
-            buf.flush(); buf.seek(0)
+            try:
+                # Python 2
+                buf = StringIO()  ## round-about way to do it but wtf?
+                ops.to_csv( buf, sep='\t', header=False, index=False )
+                buf.flush(); buf.seek(0)
+            except:
+                # Python 3
+                buf = io.StringIO()
+                ops.to_csv(buf, sep='\t', header=False, index=False )
+                buf.flush(); buf.seek(0)
+                buf2 = io.BytesIO()
+                for l in buf:
+                    buf2.write(l.encode("UTF-8"))
+                buf2.flush()
+                buf2.seek(0)
+                buf = buf2
             gr2 = nx.read_weighted_edgelist( buf )
             buf.close()
             #gr2 = nx.Graph( [ tuple(x) for x in ops[['SysName1','SysName2']].to_records(index=False) ], 
